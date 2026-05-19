@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cute Desktop Widget</title>
+  <style>
+    :root {
+      --bg1: #ffd8e6;
+      --bg2: #ffedf2;
+      --bg3: #fff1cf;
+      --card: rgba(255,255,255,0.46);
+      --card-strong: rgba(255,255,255,0.62);
+      --text: #513848;
+      --text-soft: #7f5a70;
+      --pink: #d77da5;
+      --pink2: #ff8db5;
+      --shadow: 0 24px 70px rgba(184,96,132,0.24);
+      --radius: 36px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f8dce7;
+      overflow: hidden;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .widget {
+      position: relative;
+      width: min(100%, 1280px);
+      height: min(260px, 100%);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.45);
+      overflow: hidden;
+      user-select: none;
+      touch-action: pan-y;
+    }
+
+    .inner {
+      position: absolute;
+      inset: 12px;
+      border-radius: 30px;
+      overflow: hidden;
+    }
+
+    .duck {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      animation: float 4.5s ease-in-out infinite;
+      animation-delay: var(--delay);
+      pointer-events: none;
+      opacity: 0.95;
+    }
+
+    .duck .body {
+      position: absolute;
+      inset: 0;
+      background: #fff3a6;
+      border-radius: 999px;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.06);
+    }
+    .duck .wing {
+      position: absolute;
+      left: 24%;
+      top: 20%;
+      width: 24%;
+      height: 24%;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.9);
+    }
+    .duck .eye1,
+    .duck .eye2 {
+      position: absolute;
+      width: 9%;
+      height: 9%;
+      border-radius: 999px;
+      background: #221d24;
+      top: 27%;
+    }
+    .duck .eye1 { right: 23%; }
+    .duck .eye2 { right: 18%; top: 39%; }
+    .duck .beak {
+      position: absolute;
+      left: 56%;
+      top: 51%;
+      width: 20%;
+      height: 14%;
+      border-radius: 999px;
+      background: #ff9f62;
+    }
+
+    .panel {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 12px;
+    }
+    .panel.active { display: grid; }
+
+    .panel.time {
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 12px;
+    }
+    .panel.music {
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 12px;
+    }
+    .panel.calendar {
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 12px;
+    }
+
+    .card {
+      border-radius: 26px;
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+      padding: 12px;
+      min-width: 0;
+      min-height: 0;
+    }
+    .card.strong { background: var(--card-strong); }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: #6f4f66;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .pillrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.55);
+      color: #8c6b7f;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .time-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 12px;
+      align-items: center;
+      min-height: 0;
+      margin-top: 8px;
+    }
+
+    .clock {
+      color: var(--text);
+      font-weight: 700;
+      line-height: 0.95;
+      font-size: clamp(2.2rem, 4.4vw, 4.6rem);
+      letter-spacing: -0.04em;
+    }
+    .date {
+      margin-top: 8px;
+      color: var(--text-soft);
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .status {
+      margin-top: 10px;
+      border-radius: 18px;
+      padding: 12px;
+      background: rgba(255,255,255,0.55);
+      color: #7d5e71;
+      font-size: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+
+    .mascot-box {
+      position: relative;
+      height: 100%;
+      min-height: 120px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #ffd4e2, #ffe7f0, #fff0c7);
+    }
+    .mascot {
+      position: absolute;
+      inset: 0;
+      animation: bob 4s ease-in-out infinite;
+    }
+    .mascot .star {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 86px;
+      height: 86px;
+      transform: translate(-50%, -50%);
+      background: #ff8db5;
+      clip-path: polygon(50% 0%, 61% 20%, 84% 16%, 72% 36%, 90% 50%, 72% 64%, 84% 84%, 61% 80%, 50% 100%, 39% 80%, 16% 84%, 28% 64%, 10% 50%, 28% 36%, 16% 16%, 39% 20%);
+      box-shadow: 0 12px 24px rgba(255,128,170,0.32);
+    }
+    .mascot .eye {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #2d1c25;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 18px 0 0 #2d1c25;
+    }
+    .mascot .mouth {
+      position: absolute;
+      width: 20px;
+      height: 12px;
+      border-radius: 999px;
+      background: #ffd17c;
+      left: 50%;
+      top: 58px;
+      transform: translateX(-50%);
+    }
+    .mascot .shine {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.55);
+      filter: blur(2px);
+    }
+
+    .weather-card {
+      margin-top: 10px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.6);
+      padding: 12px;
+    }
+    .temp {
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .weather-sub {
+      margin-top: 6px;
+      color: #8a6d7e;
+      font-size: 12px;
+    }
+    .mini-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .mini-box {
+      border-radius: 16px;
+      background: #fff8fb;
+      padding: 8px 6px;
+      text-align: center;
+      color: #7c5e6f;
+      font-size: 11px;
+    }
+    .mini-box b { display: block; font-size: 13px; margin-top: 2px; }
+
+    .spotify-card {
+      border-radius: 22px;
+      background: linear-gradient(135deg, #fff7dc, #ffd8e6);
+      padding: 12px;
+    }
+    .song-title { color: #54364d; font-weight: 700; font-size: 16px; }
+    .song-sub { color: #7d5e71; font-size: 12px; margin-top: 4px; }
+    .progress {
+      margin-top: 16px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.7);
+      overflow: hidden;
+    }
+    .progress > div {
+      width: 58%;
+      height: 100%;
+      background: #d97ea4;
+      border-radius: inherit;
+    }
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #8d6c80;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 12px;
+      color: #56384e;
+    }
+    .btn {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.6);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: inherit;
+    }
+    .btn.play {
+      width: 44px;
+      height: 44px;
+      background: #fff;
+    }
+
+    .playlist {
+      height: 100%;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #ffbfd3, #ffdce8, #fff0cf);
+      padding: 12px;
+      overflow: hidden;
+    }
+    .playlist-inner {
+      height: 100%;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.35);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 0;
+    }
+    .track-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .track {
+      border-radius: 16px;
+      background: rgba(255,255,255,0.55);
+      padding: 10px 12px;
+      color: #614654;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      font-size: 12px;
+    }
+    .track b { display: block; font-size: 13px; }
+
+    .calendar-left {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .month-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      text-align: center;
+      font-size: 11px;
+      color: #8b6d7f;
+    }
+    .day-grid {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      text-align: center;
+      font-size: 12px;
+    }
+    .day {
+      border-radius: 12px;
+      padding: 8px 0;
+      background: rgba(255,255,255,0.6);
+      color: #5c4254;
+    }
+    .day.active {
+      background: #f6a8c0;
+      color: #fff;
+    }
+    .calendar-note {
+      margin-top: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.55);
+      padding: 10px 12px;
+      font-size: 11px;
+      color: #7b6170;
+    }
+
+    .schedule-wrap {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .schedule-scroll {
+      margin-top: 10px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .schedule-list {
+      display: grid;
+      gap: 8px;
+    }
+    .event {
+      border-radius: 16px;
+      background: rgba(255,255,255,0.6);
+      padding: 10px 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .event-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .event-title {
+      color: #583d51;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .event-place {
+      color: #8c6e7f;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+    .event-time {
+      color: #d06d98;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 30;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.6);
+      color: #6a4b5d;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+    }
+    .nav-btn.left { left: 12px; }
+    .nav-btn.right { right: 12px; }
+
+    .dots {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      z-index: 30;
+      display: flex;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.35);
+      backdrop-filter: blur(12px);
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      border: 0;
+      background: rgba(255,255,255,0.85);
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .dot.active {
+      width: 24px;
+      background: var(--pink);
+    }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-4px) rotate(2deg); }
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-5px) scale(1.02); }
+    }
+
+    @media (max-width: 980px) {
+      .widget { height: 280px; }
+      .panel.time,
+      .panel.music,
+      .panel.calendar { grid-template-columns: 1fr; }
+      .time-layout { grid-template-columns: 1fr; }
+      .nav-btn { top: auto; bottom: 56px; transform: none; }
+      .nav-btn.left { left: 16px; }
+      .nav-btn.right { right: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="widget" id="widget">
+    <div class="duck" style="left:12px; top:12px; --size:22px; --delay:0s;">
+      <div class="body"></div><div class="wing"></div><div class="eye1"></div><div class="eye2"></div><div class="beak"></div>
+    </div>
+    <div class="duck" style="left:72px; bottom:14px; --size:18px; --delay:.8s;">
+      <div class="body"></div><div class="wing"></div><div class="eye1"></div><div class="eye2"></div><div class="beak"></div>
+    </div>
+    <div class="duck" style="right:86px; top:14px; --size:20px; --delay:1.2s;">
+      <div class="body"></div><div class="wing"></div><div class="eye1"></div><div class="eye2"></div><div class="beak"></div>
+    </div>
+    <div class="duck" style="right:18px; bottom:16px; --size:16px; --delay:1.7s;">
+      <div class="body"></div><div class="wing"></div><div class="eye1"></div><div class="eye2"></div><div class="beak"></div>
+    </div>
+
+    <div class="inner" id="panels">
+      <section class="panel time active" data-panel="0">
+        <div class="card strong">
+          <div class="topbar">
+            <div>Cute Daily Widget</div>
+            <div>Wifi • Battery 87%</div>
+          </div>
+
+          <div class="time-layout">
+            <div>
+              <div class="clock" id="clock">09:41</div>
+              <div class="date" id="date">Selasa, 19 Mei 2026</div>
+              <div class="pillrow">
+                <div class="pill">☀️ 28°C</div>
+                <div class="pill">📍 Surabaya</div>
+                <div class="pill">🔔 2 notifikasi</div>
+              </div>
+              <div class="status">Fokus sekarang: <b>revisi tugas</b> dan simpan energi buat malam.</div>
+            </div>
+            <div class="mascot-box">
+              <div class="mascot">
+                <div class="shine"></div>
+                <div class="star"></div>
+                <div class="eye"></div>
+                <div class="mouth"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="topbar">
+            <div>Cuaca</div>
+            <div>Mostly sunny</div>
+          </div>
+          <div class="weather-card">
+            <div class="temp">28°</div>
+            <div class="weather-sub">Terasa seperti 31° · lembap ringan</div>
+            <div class="mini-grid">
+              <div class="mini-box">Pagi<b>26°</b></div>
+              <div class="mini-box">Siang<b>30°</b></div>
+              <div class="mini-box">Malam<b>25°</b></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel music" data-panel="1">
+        <div class="card strong">
+          <div class="topbar">
+            <div>Spotify</div>
+            <div>Now Playing</div>
+          </div>
+          <div class="spotify-card" style="margin-top:10px;">
+            <div class="song-title">Lofi for study</div>
+            <div class="song-sub">Soft beats • cozy focus</div>
+            <div class="progress"><div></div></div>
+            <div class="time-row"><span>12:41</span><span>21:30</span></div>
+          </div>
+          <div class="controls">
+            <button class="btn" aria-label="Previous">⏮</button>
+            <button class="btn play" id="playBtn" aria-label="Play or pause">▶</button>
+            <button class="btn" aria-label="Next">⏭</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="playlist">
+            <div class="playlist-inner">
+              <div>
+                <div class="topbar" style="color:#5b3d53;">
+                  <div>Playlist kecil</div>
+                  <div>yang bikin kerja lebih enak</div>
+                </div>
+                <div class="track-list">
+                  <div class="track"><b>Sugar Clouds</b><span>Track 1</span></div>
+                  <div class="track"><b>Evening Notes</b><span>Track 2</span></div>
+                  <div class="track"><b>Cherry Window</b><span>Track 3</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel calendar" data-panel="2">
+        <div class="card calendar-left strong">
+          <div class="topbar">
+            <div>Kalender</div>
+            <div>Mei 2026</div>
+          </div>
+          <div class="month-grid">
+            <div>S</div><div>S</div><div>R</div><div>K</div><div>J</div><div>S</div><div>M</div>
+          </div>
+          <div class="day-grid" id="days"></div>
+          <div class="calendar-note">Panel schedule ada di samping dan bisa di-scroll.</div>
+        </div>
+
+        <div class="card schedule-wrap">
+          <div class="topbar">
+            <div>Schedule</div>
+            <div>Today</div>
+          </div>
+          <div class="schedule-scroll">
+            <div class="schedule-list" id="scheduleList"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <button class="nav-btn left" id="prev" aria-label="Previous panel">❮</button>
+    <button class="nav-btn right" id="next" aria-label="Next panel">❯</button>
+    <div class="dots" id="dots"></div>
+    <span class="sr-only">Swipe left or right to change panels.</span>
+  </div>
+
+  <script>
+    const panels = Array.from(document.querySelectorAll('.panel'));
+    const dotsWrap = document.getElementById('dots');
+    const widget = document.getElementById('widget');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const playBtn = document.getElementById('playBtn');
+    const daysWrap = document.getElementById('days');
+    const scheduleList = document.getElementById('scheduleList');
+    const clock = document.getElementById('clock');
+    const dateEl = document.getElementById('date');
+
+    const eventData = [
+      { time: '09:00', title: 'Kelas metodologi', place: 'Ruang 201' },
+      { time: '11:30', title: 'Ngumpul kelompok', place: 'Perpustakaan' },
+      { time: '13:00', title: 'Meeting dosen', place: 'Online' },
+      { time: '15:15', title: 'Deadline revisi', place: 'Laptop' },
+      { time: '18:00', title: 'Istirahat & makan', place: 'Rumah' },
+      { time: '20:00', title: 'Review catatan', place: 'Meja belajar' },
+      { time: '21:30', title: 'Spotify mood', place: 'Widget' },
+      { time: '22:15', title: 'Tutup hari', place: 'Relax mode' }
+    ];
+
+    let index = 0;
+    let startX = null;
+
+    function renderDots() {
+      dotsWrap.innerHTML = '';
+      panels.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.className = 'dot' + (i === index ? ' active' : '');
+        b.setAttribute('aria-label', `Go to panel ${i + 1}`);
+        b.addEventListener('click', () => setPanel(i));
+        dotsWrap.appendChild(b);
+      });
+    }
+
+    function setPanel(i) {
+      index = (i + panels.length) % panels.length;
+      panels.forEach((p, idx) => p.classList.toggle('active', idx === index));
+      renderDots();
+    }
+
+    function move(dir) { setPanel(index + dir); }
+
+    function updateClock() {
+      const now = new Date();
+      const time = new Intl.DateTimeFormat('id-ID', {
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(now);
+      const date = new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+      }).format(now);
+      clock.textContent = time;
+      dateEl.textContent = date.charAt(0).toUpperCase() + date.slice(1);
+    }
+
+    function renderCalendar() {
+      const total = 28;
+      daysWrap.innerHTML = '';
+      for (let d = 1; d <= total; d++) {
+        const el = document.createElement('div');
+        el.className = 'day' + (d === 19 ? ' active' : '');
+        el.textContent = d;
+        daysWrap.appendChild(el);
+      }
+    }
+
+    function renderSchedule() {
+      scheduleList.innerHTML = '';
+      eventData.concat(eventData).forEach((event) => {
+        const el = document.createElement('div');
+        el.className = 'event';
+        el.innerHTML = `
+          <div class="event-head">
+            <div>
+              <div class="event-title">${event.title}</div>
+              <div class="event-place">${event.place}</div>
+            </div>
+            <div class="event-time">${event.time}</div>
+          </div>
+        `;
+        scheduleList.appendChild(el);
+      });
+    }
+
+    prev.addEventListener('click', () => move(-1));
+    next.addEventListener('click', () => move(1));
+
+    widget.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+    }, { passive: true });
+
+    widget.addEventListener('touchend', (e) => {
+      if (startX === null) return;
+      const endX = e.changedTouches[0].clientX;
+      const delta = endX - startX;
+      if (delta > 40) move(-1);
+      if (delta < -40) move(1);
+      startX = null;
+    }, { passive: true });
+
+    widget.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') move(-1);
+      if (e.key === 'ArrowRight') move(1);
+    });
+
+    playBtn.addEventListener('click', () => {
+      playBtn.textContent = playBtn.textContent === '▶' ? '⏸' : '▶';
+    });
+
+    renderDots();
+    renderCalendar();
+    renderSchedule();
+    updateClock();
+    setInterval(updateClock, 1000);
+    setPanel(0);
+  </script>
+</body>
+</html>
